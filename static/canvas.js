@@ -8,12 +8,28 @@ const canvasSize = parseInt(canvas.dataset.size);
 canvas.width = canvasSize * scale;
 canvas.height = canvasSize * scale;
 
+// Local array to store canvas names
+canvases = [];
 // Local array to store pixel colors
 pixels = Array.from({ length: canvasSize }, () =>
     Array.from({ length: canvasSize }, () => "")
 );
 currentCanvas = null;
 let lastHover = null;
+
+/**
+ * Fetch canvas names, load pixels of the first canvas, creates canvas buttons
+ */
+function initCanvases() {
+    fetch("/get_canvas_list")
+        .then((res) => res.json())
+        .then((data) => {
+            canvases = data.canvases;
+            currentCanvas = canvases[0];
+            loadPixels(currentCanvas);
+            canvases.forEach((name) => createCanvasButton(name));
+        });
+}
 
 function loadPixels(name) {
     fetch(`/get_pixels/${name}`)
@@ -64,7 +80,10 @@ function createCanvas() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
-    }).then(() => loadCanvasButtons());
+    }).then(() => {
+        createCanvasButton(name);
+        canvases.push(name);
+    });
 }
 
 function createCanvasButton(name) {
@@ -75,15 +94,6 @@ function createCanvasButton(name) {
         loadPixels(name);
     };
     canvasButtons.appendChild(btn);
-}
-
-function loadCanvasButtons() {
-    fetch("/get_canvas_list")
-        .then((res) => res.json())
-        .then((data) => {
-            canvasButtons.innerHTML = "";
-            data.canvases.forEach((name) => createCanvasButton(name));
-        });
 }
 
 canvas.addEventListener("mousemove", (e) => {
@@ -119,11 +129,4 @@ canvas.addEventListener("click", (e) => {
     drawPixel(x, y, color);
 });
 
-// Load the first canvas
-fetch("/get_canvas_list")
-    .then((res) => res.json())
-    .then((data) => {
-        currentCanvas = data.canvases[0];
-        loadPixels(currentCanvas);
-    });
-loadCanvasButtons();
+initCanvases();
