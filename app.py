@@ -16,20 +16,47 @@ def init_db(overwrite=False):
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS pixels (
+                canvas TEXT,
                 x INTEGER,
                 y INTEGER,
                 color TEXT,
-                PRIMARY KEY (x, y)
+                PRIMARY KEY (canvas, x, y)
             ) STRICT;
             """
         )
+        add_canvas_to_db("Canvas1")
+        con.commit()
+
+
+def add_canvas_to_db(name):
+    with sqlite3.connect(db_file) as conn:
+        c = conn.cursor()
         for x in range(CANVAS_SIZE):
             for y in range(CANVAS_SIZE):
-                cursor.execute(
-                    "INSERT OR IGNORE INTO pixels (x, y, color) VALUES (?, ?, ?)",
-                    (x, y, "#FFFFFF"),
+                c.execute(
+                    "INSERT INTO pixels (canvas, x, y, color) VALUES (?, ?, ?, ?)",
+                    (name, x, y, "#FFFFFF"),
                 )
-        con.commit()
+        conn.commit()
+
+
+def get_canvas_names():
+    with sqlite3.connect(db_file) as conn:
+        c = conn.cursor()
+        canvases = c.execute("SELECT DISTINCT canvas FROM pixels").fetchall()
+    return [canvas[0] for canvas in canvases]
+
+
+@app.route("/create_canvas", methods=["POST"])
+def create_canvas():
+    name = request.json["name"]
+    add_canvas_to_db(name)
+    return "", 204
+
+
+@app.route("/get_canvas_list")
+def get_canvas_list():
+    return jsonify({"canvases": get_canvas_names()})
 
 
 @app.route("/")
@@ -37,21 +64,26 @@ def index():
     return render_template("index.html", canvas_size=CANVAS_SIZE)
 
 
-@app.route("/get_pixels")
-def get_pixels():
+@app.route("/get_pixels/<canvas_name>")
+def get_pixels(canvas_name):
     with sqlite3.connect(db_file) as conn:
         c = conn.cursor()
-        pixels = c.execute("SELECT x, y, color FROM pixels").fetchall()
+        pixels = c.execute(
+            "SELECT x, y, color FROM pixels WHERE canvas = ?", (canvas_name,)
+        ).fetchall()
     return jsonify(pixels)
 
 
 @app.route("/set_pixel", methods=["POST"])
 def set_pixel():
     data = request.json
-    x, y, color = data["x"], data["y"], data["color"]
+    canvas, x, y, color = data["currentCanvas"], data["x"], data["y"], data["color"]
     with sqlite3.connect(db_file) as conn:
         c = conn.cursor()
-        c.execute("REPLACE INTO pixels (x, y, color) VALUES (?, ?, ?)", (x, y, color))
+        c.execute(
+            "REPLACE INTO pixels (canvas, x, y, color) VALUES (?, ?, ?, ?)",
+            (canvas, x, y, color),
+        )
         conn.commit()
     return "", 204
 

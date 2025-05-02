@@ -11,7 +11,15 @@
     </head>
 
     <body>
-        <canvas id="canvas" data-size="{{canvas_size}}"></canvas>
+        <div style="display: flex; align-items: flex-start">
+            <canvas id="canvas" data-size="{{canvas_size}}"></canvas>
+
+            <div style="margin-left: 16px">
+                <button onclick="createCanvas()">+ Add Canvas</button>
+                <div id="canvasButtons" style="margin-top: 8px"></div>
+            </div>
+        </div>
+
         <div>
             <input type="color" id="colorPicker" value="#000000" />
         </div>

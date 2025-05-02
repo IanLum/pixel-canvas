@@ -1,6 +1,7 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
+const canvasButtons = document.getElementById("canvasButtons");
 
 const scale = 20; // Size of each pixel
 const canvasSize = parseInt(canvas.dataset.size);
@@ -11,11 +12,11 @@ canvas.height = canvasSize * scale;
 pixels = Array.from({ length: canvasSize }, () =>
     Array.from({ length: canvasSize }, () => "")
 );
-
+currentCanvas = null;
 let lastHover = null;
 
-function loadPixels() {
-    fetch("/get_pixels")
+function loadPixels(name) {
+    fetch(`/get_pixels/${name}`)
         .then((res) => res.json())
         .then((pixels) => {
             for (let [x, y, color] of pixels) {
@@ -55,6 +56,36 @@ function updateHoverOutline(point) {
     );
 }
 
+function createCanvas() {
+    const name = prompt("Canvas name?");
+    if (!name) return;
+
+    fetch("/create_canvas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+    }).then(() => loadCanvasButtons());
+}
+
+function createCanvasButton(name) {
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.onclick = () => {
+        currentCanvas = name;
+        loadPixels(name);
+    };
+    canvasButtons.appendChild(btn);
+}
+
+function loadCanvasButtons() {
+    fetch("/get_canvas_list")
+        .then((res) => res.json())
+        .then((data) => {
+            canvasButtons.innerHTML = "";
+            data.canvases.forEach((name) => createCanvasButton(name));
+        });
+}
+
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / scale);
@@ -83,9 +114,16 @@ canvas.addEventListener("click", (e) => {
     fetch("/set_pixel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x, y, color }),
+        body: JSON.stringify({ currentCanvas, x, y, color }),
     });
     drawPixel(x, y, color);
 });
 
-loadPixels();
+// Load the first canvas
+fetch("/get_canvas_list")
+    .then((res) => res.json())
+    .then((data) => {
+        currentCanvas = data.canvases[0];
+        loadPixels(currentCanvas);
+    });
+loadCanvasButtons();
