@@ -8,12 +8,12 @@ CANVAS_SIZE = 32
 
 def init_db(overwrite=False):
     with sqlite3.connect(db_file) as con:
-        cursor = con.cursor()
+        cur = con.cursor()
 
         if overwrite:
-            cursor.execute("""DROP TABLE IF EXISTS pixels""")
+            cur.execute("""DROP TABLE IF EXISTS pixels""")
 
-        cursor.execute(
+        cur.execute(
             """
             CREATE TABLE IF NOT EXISTS pixels (
                 canvas TEXT,
@@ -29,21 +29,21 @@ def init_db(overwrite=False):
 
 
 def add_canvas_to_db(name):
-    with sqlite3.connect(db_file) as conn:
-        c = conn.cursor()
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
         for x in range(CANVAS_SIZE):
             for y in range(CANVAS_SIZE):
-                c.execute(
-                    "INSERT INTO pixels (canvas, x, y, color) VALUES (?, ?, ?, ?)",
+                cur.execute(
+                    "INSERT OR IGNORE INTO pixels (canvas, x, y, color) VALUES (?, ?, ?, ?)",
                     (name, x, y, "#FFFFFF"),
                 )
-        conn.commit()
+        con.commit()
 
 
 def get_canvas_names():
-    with sqlite3.connect(db_file) as conn:
-        c = conn.cursor()
-        canvases = c.execute("SELECT DISTINCT canvas FROM pixels").fetchall()
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
+        canvases = cur.execute("SELECT DISTINCT canvas FROM pixels").fetchall()
     return [canvas[0] for canvas in canvases]
 
 
@@ -66,9 +66,9 @@ def index():
 
 @app.route("/get_pixels/<canvas_name>")
 def get_pixels(canvas_name):
-    with sqlite3.connect(db_file) as conn:
-        c = conn.cursor()
-        pixels = c.execute(
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
+        pixels = cur.execute(
             "SELECT x, y, color FROM pixels WHERE canvas = ?", (canvas_name,)
         ).fetchall()
     return jsonify(pixels)
@@ -78,16 +78,16 @@ def get_pixels(canvas_name):
 def set_pixel():
     data = request.json
     canvas, x, y, color = data["currentCanvas"], data["x"], data["y"], data["color"]
-    with sqlite3.connect(db_file) as conn:
-        c = conn.cursor()
-        c.execute(
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
+        cur.execute(
             "REPLACE INTO pixels (canvas, x, y, color) VALUES (?, ?, ?, ?)",
             (canvas, x, y, color),
         )
-        conn.commit()
+        con.commit()
     return "", 204
 
 
 if __name__ == "__main__":
-    init_db(overwrite=True)
+    init_db(overwrite=False)
     app.run(debug=True)
