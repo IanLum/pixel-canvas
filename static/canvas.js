@@ -39,8 +39,16 @@ function initCanvases() {
  * button for it.
  */
 function createCanvas() {
-    const name = prompt("Canvas name?");
-    if (!name) return;
+    let name = null;
+    // Keep prompting until a unique name is entered or the user cancels
+    while (true) {
+        name = prompt("Canvas name?");
+        if (!name) return;
+        if (!canvases.includes(name)) {
+            break;
+        }
+        alert(`A canvas with the name "${name}" already exists.`);
+    }
 
     fetch("/create_canvas", {
         method: "POST",
