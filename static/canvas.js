@@ -17,6 +17,8 @@ pixels = Array.from({ length: canvasSize }, () =>
 currentCanvas = null;
 let lastHover = null;
 
+// region: Canvases
+
 /**
  * Fetch canvas names, load pixels of the first canvas, creates canvas buttons
  */
@@ -31,6 +33,45 @@ function initCanvases() {
         });
 }
 
+/**
+ * Called when the "Add Canvas" button is clicked. Prompts the user for a
+ * canvas name, initializes a new canvas in the database, and creates a
+ * button for it.
+ */
+function createCanvas() {
+    const name = prompt("Canvas name?");
+    if (!name) return;
+
+    fetch("/create_canvas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+    }).then(() => {
+        createCanvasButton(name);
+        canvases.push(name);
+    });
+}
+
+/**
+ * Create a new canvas button and add it to the canvas buttons container.
+ * @param {string} name The name of the canvas to create a button for
+ */
+function createCanvasButton(name) {
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.onclick = () => {
+        currentCanvas = name;
+        loadPixels(name);
+    };
+    canvasButtons.appendChild(btn);
+}
+
+// region: Drawing
+
+/**
+ * Fetch pixels for a given canvas and draw them on the canvas
+ * @param {string} name The name of the canvas to load pixels from
+ */
 function loadPixels(name) {
     fetch(`/get_pixels/${name}`)
         .then((res) => res.json())
@@ -41,6 +82,14 @@ function loadPixels(name) {
         });
 }
 
+/**
+ * Draw pixel at given coordinates. Use color if specified, otherwise use the
+ * color from the pixels array. Color is unspecified when drawing over the
+ * hover outline.
+ * @param {number} x X coordinate of the pixel
+ * @param {number} y Y coordinate of the pixel
+ * @param {string} color Color of the pixel (optional)
+ */
 function drawPixel(x, y, color = null) {
     if (color) {
         pixels[y][x] = color;
@@ -51,6 +100,12 @@ function drawPixel(x, y, color = null) {
     ctx.fillRect(x * scale, y * scale, scale, scale);
 }
 
+/**
+ * Update the hover outline on the canvas. Draw over the last hover pixel to
+ * remove the outline, then draw a new outline at the given point.
+ * @param {{x: number, y: number} | null} point The point to draw the hover
+ * outline at or null to remove the outline
+ */
 function updateHoverOutline(point) {
     if (lastHover) {
         // Draw over last hover pixel to remove the outline
@@ -72,29 +127,7 @@ function updateHoverOutline(point) {
     );
 }
 
-function createCanvas() {
-    const name = prompt("Canvas name?");
-    if (!name) return;
-
-    fetch("/create_canvas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-    }).then(() => {
-        createCanvasButton(name);
-        canvases.push(name);
-    });
-}
-
-function createCanvasButton(name) {
-    const btn = document.createElement("button");
-    btn.textContent = name;
-    btn.onclick = () => {
-        currentCanvas = name;
-        loadPixels(name);
-    };
-    canvasButtons.appendChild(btn);
-}
+// region: Event Listeners
 
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -128,5 +161,7 @@ canvas.addEventListener("click", (e) => {
     });
     drawPixel(x, y, color);
 });
+
+// region: Executed Code
 
 initCanvases();
