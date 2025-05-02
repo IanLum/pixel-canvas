@@ -57,6 +57,7 @@ function createCanvas() {
     }).then(() => {
         createCanvasButton(name);
         canvases.push(name);
+        loadPixels(name);
     });
 }
 
