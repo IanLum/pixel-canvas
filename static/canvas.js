@@ -28,8 +28,9 @@ function initCanvases() {
         .then((data) => {
             canvases = data.canvases;
             currentCanvas = canvases[0];
-            loadPixels(currentCanvas);
             canvases.forEach((name) => createCanvasButton(name));
+            // Activate the first canvas
+            canvasButtons.querySelector("button").click();
         });
 }
 
@@ -61,18 +62,33 @@ function createCanvas() {
     });
 }
 
+// region: Canvas Buttons
+
 /**
  * Create a new canvas button and add it to the canvas buttons container.
  * @param {string} name The name of the canvas to create a button for
  */
 function createCanvasButton(name) {
-    const btn = document.createElement("button");
-    btn.textContent = name;
-    btn.onclick = () => {
+    const button = document.createElement("button");
+    button.textContent = name;
+    button.onclick = () => {
         currentCanvas = name;
         loadPixels(name);
+        highlightButton(button);
     };
-    canvasButtons.appendChild(btn);
+    canvasButtons.appendChild(button);
+}
+
+function highlightButton(button) {
+    // Unhighlight all buttons
+    canvasButtons.querySelectorAll("button").forEach((b) => {
+        b.style.backgroundColor = "";
+        b.style.fontWeight = "normal";
+    });
+
+    // Highlight the selected button
+    button.style.backgroundColor = "lightblue";
+    button.style.fontWeight = "bold";
 }
 
 // region: Drawing
