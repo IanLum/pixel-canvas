@@ -84,8 +84,8 @@ function createCanvasButton(name) {
 function loadPixels(name) {
     fetch(`/get_pixels/${name}`)
         .then((res) => res.json())
-        .then((pixels) => {
-            for (let [x, y, color] of pixels) {
+        .then((loadPixels) => {
+            for (let [x, y, color] of loadPixels) {
                 drawPixel(x, y, color);
             }
         });
@@ -143,8 +143,12 @@ canvas.addEventListener("mousemove", (e) => {
     const x = Math.floor((e.clientX - rect.left) / scale);
     const y = Math.floor((e.clientY - rect.top) / scale);
 
+    // Only update hover outline if the mouse is over a different pixel
+    // and the pixel is within the canvas bounds
     if (
         (lastHover?.x == x && lastHover?.y == y) ||
+        x < 0 ||
+        y < 0 ||
         x >= canvasSize ||
         y >= canvasSize
     )
