@@ -2,19 +2,35 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
 
-const scale = 24; // Size of each pixel
-const canvasSize = 32; // Number of pixels in each dimension
+const scale = 20; // Size of each pixel
+const canvasSize = parseInt(canvas.dataset.size);
 canvas.width = canvasSize * scale;
 canvas.height = canvasSize * scale;
 
-const pixels = Array.from({ length: canvasSize }, () =>
-    Array.from({ length: canvasSize }, () => "#ffffff")
+// Local array to store pixel colors
+pixels = Array.from({ length: canvasSize }, () =>
+    Array.from({ length: canvasSize }, () => "")
 );
 
 let lastHover = null;
 
-function drawPixel(x, y) {
-    ctx.fillStyle = pixels[y][x];
+function loadPixels() {
+    fetch("/get_pixels")
+        .then((res) => res.json())
+        .then((pixels) => {
+            for (let [x, y, color] of pixels) {
+                drawPixel(x, y, color);
+            }
+        });
+}
+
+function drawPixel(x, y, color = null) {
+    if (color) {
+        pixels[y][x] = color;
+        ctx.fillStyle = color;
+    } else {
+        ctx.fillStyle = pixels[y][x];
+    }
     ctx.fillRect(x * scale, y * scale, scale, scale);
 }
 
@@ -44,7 +60,12 @@ canvas.addEventListener("mousemove", (e) => {
     const x = Math.floor((e.clientX - rect.left) / scale);
     const y = Math.floor((e.clientY - rect.top) / scale);
 
-    if (lastHover?.x == x && lastHover?.y == y) return;
+    if (
+        (lastHover?.x == x && lastHover?.y == y) ||
+        x >= canvasSize ||
+        y >= canvasSize
+    )
+        return;
 
     updateHoverOutline({ x, y });
 });
@@ -57,6 +78,14 @@ canvas.addEventListener("click", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / scale);
     const y = Math.floor((e.clientY - rect.top) / scale);
-    pixels[y][x] = colorPicker.value;
-    drawPixel(x, y);
+    // Set pixel color in db
+    color = colorPicker.value;
+    fetch("/set_pixel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ x, y, color }),
+    });
+    drawPixel(x, y, color);
 });
+
+loadPixels();
