@@ -18,7 +18,7 @@ pixels = Array.from({ length: canvasSize }, () =>
     Array.from({ length: canvasSize }, () => "")
 );
 currentCanvas = null;
-let lastHover = null;
+lastHover = null;
 
 // region: Canvases
 
@@ -165,6 +165,10 @@ function createCanvasButton(name) {
     return button;
 }
 
+/**
+ * Unhighlight all buttons and highlight the selected button
+ * @param {HTMLButtonElement} button The button to highlight
+ */
 function highlightButton(button) {
     // Unhighlight all buttons
     canvasButtons.querySelectorAll("button").forEach((b) => {
@@ -240,6 +244,11 @@ function updateHoverOutline(point) {
 
 // region: Event Listeners
 
+/**
+ * Event listener for when mouse is moved within canvas. Updates the hover
+ * outline to the pixel under the mouse cursor. Only updates if the mouse is
+ * over a different pixel than the last hover pixel.
+ */
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / scale);
@@ -259,10 +268,18 @@ canvas.addEventListener("mousemove", (e) => {
     updateHoverOutline({ x, y });
 });
 
+/**
+ * Event listener for when the mouse leaves the canvas. Removes the hover
+ * outline.
+ */
 canvas.addEventListener("mouseleave", () => {
     updateHoverOutline(null);
 });
 
+/**
+ * Event listener for when the mouse is clicked on the canvas. Sets the
+ * pixel color in the database and draws the pixel on the canvas.
+ */
 canvas.addEventListener("click", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / scale);
