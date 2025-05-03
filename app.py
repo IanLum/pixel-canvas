@@ -24,7 +24,12 @@ def init_db(overwrite=False):
             ) STRICT;
             """
         )
-        add_canvas_to_db("Canvas1")
+
+        # If table empty, add a default canvas
+        cur.execute("""SELECT COUNT(*) FROM pixels""")
+        if cur.fetchone()[0] == 0:
+            add_canvas_to_db("Canvas1")
+
         con.commit()
 
 
