@@ -145,6 +145,22 @@ function createCanvasButton(name) {
         loadPixels(name);
         highlightButton(button);
     };
+    button.ondblclick = () => {
+        const newName = prompt("Rename canvas:", name);
+        if (!newName) return;
+        if (canvases.includes(newName)) return alert("Invalid name.");
+
+        fetch("/rename_canvas", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ current_name: name, new_name: newName }),
+        }).then(() => {
+            button.textContent = newName;
+            canvases[canvases.indexOf(name)] = newName;
+            if (currentCanvas === name) currentCanvas = newName;
+            name = newName;
+        });
+    };
     canvasButtons.appendChild(button);
     return button;
 }

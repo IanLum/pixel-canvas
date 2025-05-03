@@ -76,6 +76,20 @@ def delete_canvas(canvas_name):
     return "", 204
 
 
+@app.route("/rename_canvas", methods=["POST"])
+def rename_canvas():
+    data = request.json
+    current_name = data["current_name"]
+    new_name = data["new_name"]
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
+        cur.execute(
+            "UPDATE pixels SET canvas = ? WHERE canvas = ?", (new_name, current_name)
+        )
+        con.commit()
+    return "", 204
+
+
 @app.route("/get_canvas_list")
 def get_canvas_list():
     return jsonify({"canvases": get_canvas_names()})
