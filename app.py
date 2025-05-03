@@ -1,8 +1,10 @@
 from flask import Flask, render_template, jsonify, request
+from flask_socketio import SocketIO, emit
 import sqlite3
 import os
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 db_file = "pixels.db"
 CANVAS_SIZE = 32
 MAX_CANVASES = 10
@@ -191,6 +193,8 @@ def set_pixel():
             (canvas, x, y, color),
         )
         con.commit()
+
+    socketio.emit("pixel_updated", {"x": x, "y": y, "color": color, "canvas": canvas})
     return "", 204
 
 
@@ -198,3 +202,4 @@ if __name__ == "__main__":
     init_db(overwrite=False)
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+    socketio.run(app)

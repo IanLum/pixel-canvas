@@ -4,6 +4,7 @@ const colorPicker = document.getElementById("colorPicker");
 const canvasButtons = document.getElementById("canvasButtons");
 const deleteButton = document.getElementById("deleteButton");
 const addButton = document.getElementById("addButton");
+const socket = io();
 
 const scale = 20; // Size of each pixel
 const canvasSize = parseInt(canvas.dataset.size);
@@ -297,3 +298,9 @@ canvas.addEventListener("click", (e) => {
 // region: Executed Code
 
 initCanvases();
+// Check for updates
+socket.on("pixel_updated", ({ x, y, color, canvas }) => {
+    if (canvas === currentCanvas) {
+        drawPixel(x, y, color);
+    }
+});
