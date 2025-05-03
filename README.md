@@ -2,7 +2,7 @@
 
 Inspired by r/place, made for databases final project
 
-## Setup
+## Run Locally
 
 1. Clone the repo
 2. Run `pip install -r requirements.txt`
