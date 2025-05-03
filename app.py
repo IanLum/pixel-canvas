@@ -54,6 +54,15 @@ def create_canvas():
     return "", 204
 
 
+@app.route("/delete_canvas/<canvas_name>", methods=["DELETE"])
+def delete_canvas(canvas_name):
+    with sqlite3.connect(db_file) as con:
+        cur = con.cursor()
+        cur.execute("DELETE FROM pixels WHERE canvas = ?", (canvas_name,))
+        con.commit()
+    return "", 204
+
+
 @app.route("/get_canvas_list")
 def get_canvas_list():
     return jsonify({"canvases": get_canvas_names()})

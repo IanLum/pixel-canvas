@@ -2,6 +2,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
 const canvasButtons = document.getElementById("canvasButtons");
+const deleteButton = document.getElementById("deleteButton");
 
 const scale = 20; // Size of each pixel
 const canvasSize = parseInt(canvas.dataset.size);
@@ -31,6 +32,7 @@ function initCanvases() {
             canvases.forEach((name) => createCanvasButton(name));
             // Activate the first canvas
             canvasButtons.querySelector("button").click();
+            setDeleteButtonStyle(canvases.length > 1);
         });
 }
 
@@ -56,10 +58,59 @@ function createCanvas() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
     }).then(() => {
-        createCanvasButton(name);
+        let button = createCanvasButton(name);
         canvases.push(name);
-        loadPixels(name);
+        // Activate the new canvas
+        button.click();
+        setDeleteButtonStyle(true);
     });
+}
+
+/**
+ * Called when the "Delete Canvas" button is clicked. Prompts the user for
+ * confirmation, deletes the canvas from the database, and removes the button.
+ * If only one canvas remains, alerts the user that it cannot be deleted.
+ */
+function deleteCanvas() {
+    if (canvases.length === 1) {
+        alert("Cannot delete the last canvas.");
+        return;
+    }
+    if (confirm(`Delete canvas "${currentCanvas}"?`)) {
+        fetch(`/delete_canvas/${currentCanvas}`, { method: "DELETE" }).then(
+            () => {
+                // Get active button
+                const activeButton = [...canvasButtons.children].find(
+                    (b) => b.textContent === currentCanvas
+                );
+                // Active the previous canvas button if it exists, otherwise the next one
+                const nextButton =
+                    activeButton.previousElementSibling ??
+                    activeButton.nextElementSibling;
+
+                // Remove active button
+                activeButton.remove();
+                canvases = canvases.filter((c) => c !== currentCanvas);
+
+                // Active next button
+                nextButton.click();
+
+                if (canvases.length === 1) setDeleteButtonStyle(false);
+            }
+        );
+    }
+}
+
+/**
+ * Set the style of the delete button based on whether it is enabled or not.
+ * @param {boolean} enabled
+ */
+function setDeleteButtonStyle(enabled) {
+    if (enabled) {
+        deleteButton.style.backgroundColor = "";
+    } else {
+        deleteButton.style.backgroundColor = "grey";
+    }
 }
 
 // region: Canvas Buttons
@@ -77,6 +128,7 @@ function createCanvasButton(name) {
         highlightButton(button);
     };
     canvasButtons.appendChild(button);
+    return button;
 }
 
 function highlightButton(button) {
