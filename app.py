@@ -8,6 +8,14 @@ MAX_CANVASES = 10
 
 
 def init_db(overwrite=False):
+    """
+    Initializes the database by creating a table for pixels if it doesn't exist
+    and populating it with a default canvas if the table is empty.
+
+    Args:
+        overwrite (bool): If True, drops the existing table before creating a
+            new one.
+    """
     with sqlite3.connect(db_file) as con:
         cur = con.cursor()
 
@@ -35,6 +43,13 @@ def init_db(overwrite=False):
 
 
 def add_canvas_to_db(name):
+    """
+    Adds a new canvas to the database with the specified name. Initializes rows
+    for all pixels, set to white.
+
+    Args:
+        name (str): The name of the canvas to be added.
+    """
     with sqlite3.connect(db_file) as con:
         cur = con.cursor()
         for x in range(CANVAS_SIZE):
@@ -47,6 +62,12 @@ def add_canvas_to_db(name):
 
 
 def get_canvas_names():
+    """
+    Queries the database for the names of all canvases.
+
+    Returns:
+        list[str]: A list of canvas names.
+    """
     with sqlite3.connect(db_file) as con:
         cur = con.cursor()
         canvases = cur.execute("SELECT DISTINCT canvas FROM pixels").fetchall()
@@ -55,6 +76,9 @@ def get_canvas_names():
 
 @app.route("/")
 def index():
+    """
+    Renders the main page
+    """
     return render_template(
         "index.html", canvas_size=CANVAS_SIZE, max_canvases=MAX_CANVASES
     )
@@ -62,6 +86,12 @@ def index():
 
 @app.route("/create_canvas", methods=["POST"])
 def create_canvas():
+    """
+    Endpoint to create a new canvas
+
+    Returns:
+        204 no content response
+    """
     name = request.json["name"]
     add_canvas_to_db(name)
     return "", 204
@@ -69,6 +99,15 @@ def create_canvas():
 
 @app.route("/delete_canvas/<canvas_name>", methods=["DELETE"])
 def delete_canvas(canvas_name):
+    """
+    Endpoint to delete a canvas by its name. Arg passed in URL.
+
+    Args:
+        canvas_name (str): The name of the canvas to be deleted.
+
+    Returns:
+        204 no content response
+    """
     with sqlite3.connect(db_file) as con:
         cur = con.cursor()
         cur.execute("DELETE FROM pixels WHERE canvas = ?", (canvas_name,))
@@ -78,6 +117,16 @@ def delete_canvas(canvas_name):
 
 @app.route("/rename_canvas", methods=["POST"])
 def rename_canvas():
+    """
+    Endpoint to rename a canvas.
+
+    Expects a JSON with:
+        current_name (str): The name of the canvas to be renamed.
+        new_name (str): The new name for the canvas.
+
+    Returns:
+        204 no content response
+    """
     data = request.json
     current_name = data["current_name"]
     new_name = data["new_name"]
@@ -92,11 +141,27 @@ def rename_canvas():
 
 @app.route("/get_canvas_list")
 def get_canvas_list():
+    """
+    Endpoint to get a list of all canvas names.
+
+    Returns:
+        JSON response with a list of canvas names.
+    """
     return jsonify({"canvases": get_canvas_names()})
 
 
 @app.route("/get_pixels/<canvas_name>")
 def get_pixels(canvas_name):
+    """
+    Endpoint to get all pixels for a specific canvas. Args passed in URL.
+
+    Args:
+        canvas_name (str): The name of the canvas to get pixels for.
+
+    Returns:
+        JSON response with a list of pixels, each represented as a tuple of
+        (x, y, color).
+    """
     with sqlite3.connect(db_file) as con:
         cur = con.cursor()
         pixels = cur.execute(
@@ -107,6 +172,15 @@ def get_pixels(canvas_name):
 
 @app.route("/set_pixel", methods=["POST"])
 def set_pixel():
+    """
+    Endpoint to set a pixel's color in the database.
+
+    Expects a JSON with:
+        currentCanvas (str): The name of the canvas.
+        x (int): The x-coordinate of the pixel.
+        y (int): The y-coordinate of the pixel.
+        color (str): The hexcode color to set the pixel to.
+    """
     data = request.json
     canvas, x, y, color = data["currentCanvas"], data["x"], data["y"], data["color"]
     with sqlite3.connect(db_file) as con:
