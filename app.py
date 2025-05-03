@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request
 import sqlite3
 
 app = Flask(__name__)
-db_file = "test.db"
+db_file = "pixels.db"
 CANVAS_SIZE = 32
 MAX_CANVASES = 10
 
