@@ -4,6 +4,7 @@ import sqlite3
 app = Flask(__name__)
 db_file = "test.db"
 CANVAS_SIZE = 32
+MAX_CANVASES = 10
 
 
 def init_db(overwrite=False):
@@ -52,6 +53,13 @@ def get_canvas_names():
     return [canvas[0] for canvas in canvases]
 
 
+@app.route("/")
+def index():
+    return render_template(
+        "index.html", canvas_size=CANVAS_SIZE, max_canvases=MAX_CANVASES
+    )
+
+
 @app.route("/create_canvas", methods=["POST"])
 def create_canvas():
     name = request.json["name"]
@@ -71,11 +79,6 @@ def delete_canvas(canvas_name):
 @app.route("/get_canvas_list")
 def get_canvas_list():
     return jsonify({"canvases": get_canvas_names()})
-
-
-@app.route("/")
-def index():
-    return render_template("index.html", canvas_size=CANVAS_SIZE)
 
 
 @app.route("/get_pixels/<canvas_name>")

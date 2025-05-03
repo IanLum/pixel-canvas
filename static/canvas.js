@@ -3,9 +3,11 @@ const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
 const canvasButtons = document.getElementById("canvasButtons");
 const deleteButton = document.getElementById("deleteButton");
+const addButton = document.getElementById("addButton");
 
 const scale = 20; // Size of each pixel
 const canvasSize = parseInt(canvas.dataset.size);
+const maxCanvases = parseInt(canvas.dataset.maxCanvases);
 canvas.width = canvasSize * scale;
 canvas.height = canvasSize * scale;
 
@@ -32,16 +34,21 @@ function initCanvases() {
             canvases.forEach((name) => createCanvasButton(name));
             // Activate the first canvas
             canvasButtons.querySelector("button").click();
-            setDeleteButtonStyle(canvases.length > 1);
+            setButtonGreyed(deleteButton, canvases.length <= 1);
+            setButtonGreyed(addButton, canvases.length >= maxCanvases);
         });
 }
 
 /**
  * Called when the "Add Canvas" button is clicked. Prompts the user for a
  * canvas name, initializes a new canvas in the database, and creates a
- * button for it.
+ * button for it. If the maximum number of canvases is reached, alerts the user.
  */
 function createCanvas() {
+    if (canvases.length >= maxCanvases) {
+        alert(`Maximum number of canvases (${maxCanvases}) reached.`);
+        return;
+    }
     let name = null;
     // Keep prompting until a unique name is entered or the user cancels
     while (true) {
@@ -60,9 +67,15 @@ function createCanvas() {
     }).then(() => {
         let button = createCanvasButton(name);
         canvases.push(name);
+
         // Activate the new canvas
         button.click();
-        setDeleteButtonStyle(true);
+
+        // Ungrey delete button
+        setButtonGreyed(deleteButton, false);
+
+        // Check to grey out add button
+        if (canvases.length >= maxCanvases) setButtonGreyed(addButton, true);
     });
 }
 
@@ -95,21 +108,26 @@ function deleteCanvas() {
                 // Active next button
                 nextButton.click();
 
-                if (canvases.length === 1) setDeleteButtonStyle(false);
+                // Ungrey add button
+                setButtonGreyed(addButton, false);
+
+                // Check to grey out delete button
+                if (canvases.length === 1) setButtonGreyed(deleteButton, true);
             }
         );
     }
 }
 
 /**
- * Set the style of the delete button based on whether it is enabled or not.
- * @param {boolean} enabled
+ * Grey or ungrey a given button
+ * @param {HTMLButtonElement} button The button to grey or ungrey
+ * @param {boolean} greyed Whether to grey the button or not
  */
-function setDeleteButtonStyle(enabled) {
-    if (enabled) {
-        deleteButton.style.backgroundColor = "";
+function setButtonGreyed(button, greyed) {
+    if (greyed) {
+        button.style.backgroundColor = "grey";
     } else {
-        deleteButton.style.backgroundColor = "grey";
+        button.style.backgroundColor = "";
     }
 }
 

@@ -12,10 +12,16 @@
 
     <body>
         <div style="display: flex; align-items: flex-start">
-            <canvas id="canvas" data-size="{{canvas_size}}"></canvas>
+            <canvas
+                id="canvas"
+                data-size="{{canvas_size}}"
+                data-max-canvases="{{max_canvases}}"
+            ></canvas>
 
             <div style="margin-left: 16px">
-                <button onclick="createCanvas()">+ Add Canvas</button>
+                <button id="addButton" onclick="createCanvas()">
+                    + Add Canvas
+                </button>
                 <button id="deleteButton" onclick="deleteCanvas()">
                     Delete Active
                 </button>
